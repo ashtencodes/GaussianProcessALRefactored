@@ -1,0 +1,1 @@
+image_path = "C:\\Users\\ashte\\Desktop\\images\\"
