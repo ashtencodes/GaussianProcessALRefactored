@@ -106,28 +106,94 @@ def sample_disp_con(x, x_start, r_disp):
     i_con = np.sort(i_con)
     return list(i_con[:, 0])
 
-fig = plt.figure(figsize=(18, 12))
+def parseTif():
+    # %% parse geotiff files
+    file_name1 = 'tifs/Shoemaker_5mDEM.tif'
+    # You need to multiply 0.5 for each pixel value to get the actual elevation.
+    Aimg = gdal.Open(file_name1)
+    A = Aimg.GetRasterBand(1).ReadAsArray()
 
-dx = 2
-r_vec = np.linspace(grid_bounds[0][0],grid_bounds[0][1],int((grid_size-1)/dx+1))
-i_spiral = make_spiral(r_vec,r_vec)
-x_spiral = r_vec[i_spiral[:,0]]
-y_spiral = r_vec[i_spiral[:,1]]
-i_train = []
-i_seq = list(range(0,n_samples))
+    file_name2 = 'tifs/Shoemaker_280mIceExposures.tif'
+    Bimg = gdal.Open(file_name2)
+    B = Bimg.GetRasterBand(1).ReadAsArray()
 
-training_iter = 100
-var_iter_local = []
-var_iter_global = []
-rmse_local_obs = []
-rmse_global_obs = []
-rmse_local_true = []
-rmse_global_true = []
-RBF_lengthscale = []
-RBF_noise = []
-covar_global = []
-covar_trace = []
-covar_totelements = []
-covar_nonzeroelements = []
-AIC = []
-BIC = []
+    file_name3 = 'tifs/Shoemaker_250mLAMP-OnOffRatio.tif'
+    Cimg = gdal.Open(file_name3)
+    C = Cimg.GetRasterBand(1).ReadAsArray()
+
+    # make DEMs and other maps
+    # to build a DEM, each index in row and column is 5 m
+    (n_y, n_x) = np.shape(A)
+    spacing = 5.0
+    x_vec_grid5 = np.array(range(n_x)) * spacing
+    y_vec_grid5 = np.array(range(n_y)) * spacing
+    x_mat5, y_mat5 = np.meshgrid(x_vec_grid5, y_vec_grid5)
+    z_mat5 = A / 2
+    z_mat5 = np.where(z_mat5 == 32767 / 2, np.nan, z_mat5)
+    z_min5 = min(z_mat5[~np.isnan(z_mat5)])
+    z_max5 = max(z_mat5[~np.isnan(z_mat5)])
+
+    # unravel grid data
+    x_DEM5 = x_mat5.ravel()
+    y_DEM5 = y_mat5.ravel()
+    z_DEM5 = z_mat5.ravel()
+
+    #  parse ice data distance 280 m
+    (n_y, n_x) = np.shape(B)
+    spacing = 280.0
+    x_vec_grid280 = np.array(range(n_x)) * spacing
+    y_vec_grid280 = np.array(range(n_y)) * spacing
+    x_mat280, y_mat280 = np.meshgrid(x_vec_grid280, y_vec_grid280)
+    z_mat280 = z_mat5[::56, ::56]
+    z_mat280 = z_mat280[0:n_y, 0:n_x]
+
+    # unravel grid data
+    x_DEM280 = x_mat280.ravel()
+    y_DEM280 = y_mat280.ravel()
+    z_DEM280 = z_mat280.ravel()
+    ice_DEM280 = B.ravel()
+
+    #  parse LAMP data distance 250m
+    (n_y, n_x) = np.shape(C)
+    spacing = 250.0
+    x_vec_grid250 = np.array(range(n_x)) * spacing
+    y_vec_grid250 = np.array(range(n_y)) * spacing
+    x_mat250, y_mat250 = np.meshgrid(x_vec_grid250, y_vec_grid250)
+    z_mat250 = z_mat5[::50, ::50]
+    # unravel grid data
+    x_DEM250 = x_mat250.ravel()
+    y_DEM250 = y_mat250.ravel()
+    z_DEM250 = z_mat250.ravel()
+
+    C = np.where(C == -9999, np.nan, C)
+    c_min = min(C[~np.isnan(C)])
+    c_max = max(C[~np.isnan(C)])
+    c_DEM250 = C.ravel()
+    # let's make LAMP data the elevation
+    LAMP_DEM280 = np.zeros(len(x_DEM280))
+    x_list = np.array([x_DEM250, y_DEM250]).transpose()
+    for i in range(len(x_DEM280)):
+        x_sample = np.array([x_DEM280[i], y_DEM280[i]])
+        LAMP_DEM280[i] = nearest_neighbor(x_sample, x_list, c_DEM250)
+    # %% clean up data
+    # training data input is DEM position
+    x_true = np.array([x_DEM250 / 1000, y_DEM250 / 1000, z_DEM250 / 1000]).transpose()
+    # training data output is LAMP
+    y_obs = np.double(c_DEM250)
+
+    # get rid of elevation nan values
+    y_obs = y_obs[~np.isnan(x_true[:, 2])]
+    x_true = x_true[~np.isnan(x_true[:, 2]), :]
+    # get rid of LAMP data
+    x_true = x_true[~np.isnan(y_obs), :]
+    y_obs = y_obs[~np.isnan(y_obs)]
+
+    x_true_doub = x_true
+    y_obs_doub = y_obs
+
+    for i in range(x_true.shape[0]):
+        y_obs_doub[i] = np.float64(y_obs[i])
+        for j in range(x_true.shape[1]):
+            x_true_doub[i, j] = np.float64(x_true[i, j])
+
+    return x_true, x_true_doub, y_obs

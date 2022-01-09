@@ -1,1 +1,3 @@
-image_path = "C:\\Users\\ashte\\Desktop\\images\\"
+from surfaces import *
+
+parabola("snake", "4", "noise")

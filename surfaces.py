@@ -1,7 +1,10 @@
 import numpy as np
 import math
+from spiral import *
+from explore import *
+from initialize import *
 
-def parabola(noise):
+def parabola(strategy, dxInput, noise, gpflag="local"):
     grid_bounds = [(-1, 1), (-1, 1)]
     grid_size = 21
     x_1 = np.linspace(grid_bounds[0][0], grid_bounds[0][1], grid_size)
@@ -21,8 +24,17 @@ def parabola(noise):
         y_obs = y_true
         noise_name = 'none'
     func_name = 'parabola'
+    dx = int(dxInput)
 
-def townsend(noise):
+    if strategy == "spiral":
+        exploreSpiral(y_obs, x_true, y_true ,grid_bounds, grid_diff, grid_size, n_samples, func_name, noise_name, 3.0, dx)
+    elif strategy == "snake":
+        exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_samples, func_name, noise_name, 3.0, dx)
+    elif strategy == "gpal":
+        exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, gpflag, r_disp)
+
+
+def townsend(strategy, dxInput, noise, gpflag="local"):
     grid_bounds = [(-2.5, 2.5), (-2.5, 2.5)]
     grid_size = 51
     x_1 = np.linspace(grid_bounds[0][0], grid_bounds[0][1], grid_size)
@@ -44,3 +56,50 @@ def townsend(noise):
         y_obs = y_true
         noise_name = 'none'
     func_name = 'townsend'
+    dx = int(dxInput)
+
+    if strategy == "spiral":
+        exploreSpiral(y_obs, x_true, y_true ,grid_bounds, grid_diff, grid_size, n_samples, func_name, noise_name, 3.0, dx)
+    elif strategy == "snake":
+        exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_samples, func_name, noise_name, 3.0, dx)
+    elif strategy == "gpal":
+        exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, gpflag, r_disp)
+
+def lunar(strategy, dxInput, r_dispIn, gpflag="local"):
+    x_true, x_true_doub, y_obs = parseTif()
+
+    r_disp = r_dispIn
+    r_NN = np.sqrt(3) * 0.25
+    r_con = 3 * r_NN
+
+    x_center_all = np.mean(x_true, 0)
+    x_disp = np.sqrt((x_true[:, 0] - x_center_all[0]) ** 2 + (x_true[:, 1] - x_center_all[1]) ** 2 + (
+                x_true[:, 2] - x_center_all[2]) ** 2)
+    i_min = np.argmin(x_disp)
+    x_center = x_true[i_min, :]
+
+    x_true = x_true_doub - x_center
+
+    y_obs = y_obs[np.argwhere(x_true[:, 0] >= -r_disp / 2)[:, 0]]
+    x_true = x_true[np.argwhere(x_true[:, 0] >= -r_disp / 2)[:, 0]]
+    y_obs = y_obs[np.argwhere(x_true[:, 1] >= -r_disp / 2)[:, 0]]
+    x_true = x_true[np.argwhere(x_true[:, 1] >= -r_disp / 2)[:, 0]]
+    y_obs = y_obs[np.argwhere(x_true[:, 0] <= r_disp / 2)[:, 0]]
+    x_true = x_true[np.argwhere(x_true[:, 0] <= r_disp / 2)[:, 0]]
+    y_obs = y_obs[np.argwhere(x_true[:, 1] <= r_disp / 2)[:, 0]]
+    x_true = x_true[np.argwhere(x_true[:, 1] <= r_disp / 2)[:, 0]]
+
+    n_samples = len(y_obs)
+
+    dx = int(dxInput)
+
+    func_name = "LAMP"
+
+    noise_name = "noise"
+
+    if strategy == "spiral":
+        exploreSpiral(y_obs, x_true, y_true ,grid_bounds, grid_diff, grid_size, n_samples, func_name, noise_name, r_disp, dx)
+    elif strategy == "snake":
+        exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_samples, func_name, noise_name, r_disp, dx)
+    elif strategy == "gpal":
+        exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, gpflag, r_disp)

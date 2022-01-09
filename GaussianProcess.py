@@ -1,6 +1,7 @@
 from initialize import *
 from surfaces import *
 
+
 def GPtrain(x_train, y_train, training_iter):
     # initialize likelihood and model
     likelihood = gpytorch.likelihoods.GaussianLikelihood()
@@ -57,7 +58,7 @@ def GPeval(x_test, model, likelihood):
     return observed_pred, lower, upper
 
 
-def plotGP():
+def plotGP(fig, x_true, i_sample, y_obs, i_train, observed_pred_global, x_test_global, x_test_local, upper_local, lower_local, var_iter_local, var_iter_global, rmse_local_true, rmse_global_true, RBF_lengthscale, RBF_noise, covar_trace, covar_totelements, covar_nonzeroelements, AIC, BIC):
     ax1 = fig.add_subplot(2, 3, 1, projection='3d')
     rover = ax1.scatter3D(x_true[i_sample, 0], x_true[i_sample, 1],
                           y_obs[i_sample], s=100, color='black', marker='*', zorder=1)
