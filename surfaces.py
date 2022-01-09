@@ -2,6 +2,7 @@ import numpy as np
 import math
 from spiral import *
 from explore import *
+from LAMP import *
 from initialize import *
 
 def parabola(strategy, dxInput, noise, gpflag="local"):
@@ -31,7 +32,7 @@ def parabola(strategy, dxInput, noise, gpflag="local"):
     elif strategy == "snake":
         exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_samples, func_name, noise_name, 3.0, dx)
     elif strategy == "gpal":
-        exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, gpflag, r_disp)
+        exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, gpflag, 3.0)
 
 
 def townsend(strategy, dxInput, noise, gpflag="local"):
@@ -48,7 +49,6 @@ def townsend(strategy, dxInput, noise, gpflag="local"):
     y_true = -(np.cos((x_true[:, 0] - 0.1) * x_true[:, 1])) ** 2 - x_true[:, 0] * np.sin(
         3 * x_true[:, 0] + x_true[:, 1])
     n_samples = len(y_true)
-    func_name = 'townsend'
     if noise == "noise":
         y_obs = y_true + np.random.rand(n_samples) * math.sqrt(0.02)
         noise_name = 'noise'
@@ -63,12 +63,12 @@ def townsend(strategy, dxInput, noise, gpflag="local"):
     elif strategy == "snake":
         exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_samples, func_name, noise_name, 3.0, dx)
     elif strategy == "gpal":
-        exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, gpflag, r_disp)
+        exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, gpflag, 3.0)
 
 def lunar(strategy, dxInput, r_dispIn, gpflag="local"):
     x_true, x_true_doub, y_obs = parseTif()
 
-    r_disp = r_dispIn
+    r_disp = int(r_dispIn)
     r_NN = np.sqrt(3) * 0.25
     r_con = 3 * r_NN
 
@@ -93,13 +93,9 @@ def lunar(strategy, dxInput, r_dispIn, gpflag="local"):
 
     dx = int(dxInput)
 
-    func_name = "LAMP"
-
-    noise_name = "noise"
-
     if strategy == "spiral":
-        exploreSpiral(y_obs, x_true, y_true ,grid_bounds, grid_diff, grid_size, n_samples, func_name, noise_name, r_disp, dx)
+        exploreLAMPSpiral(dx, r_disp, n_samples, x_true, y_obs, r_con)
     elif strategy == "snake":
-        exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_samples, func_name, noise_name, r_disp, dx)
+        exploreLAMPSnake(dx, n_samples, r_disp, x_true, y_obs, r_con)
     elif strategy == "gpal":
-        exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, gpflag, r_disp)
+        exploreLAMPGPAL(n_samples, x_true, y_obs, gpflag, r_disp)

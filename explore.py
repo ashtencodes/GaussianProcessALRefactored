@@ -1,7 +1,7 @@
-from GaussianProcess import *
-from surfaces import *
+import GaussianProcess
 from output import *
 from initialize import *
+from spiral import *
 
 
 def exploreSpiral(y_obs, x_true, y_true ,grid_bounds, grid_diff, grid_size, n_samples, func_name, noise_name, r_disp, dx):
@@ -45,7 +45,7 @@ def exploreSpiral(y_obs, x_true, y_true ,grid_bounds, grid_diff, grid_size, n_sa
         x_train = x_train.float()
         y_train = y_train.float()
 
-        likelihood, model, optimizer, output, loss = GPtrain(x_train, y_train, training_iter)
+        likelihood, model, optimizer, output, loss = GaussianProcess.GPtrain(x_train, y_train, training_iter)
 
         RBF_lengthscale.append(model.covar_module.base_kernel.lengthscale.item())
         RBF_noise.append(model.likelihood.noise.item())
@@ -61,7 +61,7 @@ def exploreSpiral(y_obs, x_true, y_true ,grid_bounds, grid_diff, grid_size, n_sa
         x_test_global = x_test_global.float()
 
         # Get into evaluation (predictive posterior) mode
-        observed_pred_local, lower_local, upper_local = GPeval(x_test_local, model, likelihood)
+        observed_pred_local, lower_local, upper_local = GaussianProcess.GPeval(x_test_local, model, likelihood)
         with torch.no_grad():
             f_preds = model(x_test_local)
             y_preds = likelihood(model(x_test_local))
@@ -74,7 +74,7 @@ def exploreSpiral(y_obs, x_true, y_true ,grid_bounds, grid_diff, grid_size, n_sa
         mse_local_obs = sklearn.metrics.mean_squared_error(y_true[i_con], observed_pred_local.mean.numpy())
         rmse_local_obs.append(math.sqrt(mse_local_obs))
 
-        observed_pred_global, lower_global, upper_global = GPeval(x_test_global, model, likelihood)
+        observed_pred_global, lower_global, upper_global = GaussianProcess.GPeval(x_test_global, model, likelihood)
         with torch.no_grad():
             f_preds = model(x_test_global)
             y_preds = likelihood(model(x_test_global))
@@ -103,13 +103,13 @@ def exploreSpiral(y_obs, x_true, y_true ,grid_bounds, grid_diff, grid_size, n_sa
         BIC.append(BIC_sample)
 
         # plot real surface and the observed measurements
-        ax1, ax2, ax3, ax4, ax4a, ax5, ax5a, ax6 = plotGP(fig, x_true, i_sample, y_obs, i_train, observed_pred_global, x_test_global, x_test_local, upper_local, lower_local, var_iter_local, var_iter_global, rmse_local_true, rmse_global_true, RBF_lengthscale, RBF_noise, covar_trace, covar_totelements, covar_nonzeroelements, AIC, BIC)
+        ax1, ax2, ax3, ax4, ax4a, ax5, ax5a, ax6 = GaussianProcess.plotGP(fig, x_true, i_sample, y_obs, i_train, observed_pred_global, x_test_global, x_test_local, upper_local, lower_local, var_iter_local, var_iter_global, rmse_local_true, rmse_global_true, RBF_lengthscale, RBF_noise, covar_trace, covar_totelements, covar_nonzeroelements, AIC, BIC)
         plt.show()
 
         # fig.tight_layout()
         fig.savefig(image_path + str(len(set(i_train))) + '.png')
         fig.clear()
-    createVideo("Spiral", func_name, dx, noise_name, r_disp, "")
+    createVideo("Spiral", func_name, noise_name, r_disp, dx)
     outputMetric(i_train, x_true, y_true, observed_pred_global, x_test_global, rmse_global_true, rmse_global_obs, plt, rmse_local_true, var_iter_global, AIC, BIC, RBF_lengthscale, RBF_noise, covar_trace)
 
 def exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_samples, func_name, noise_name, r_disp, dx):
@@ -164,7 +164,7 @@ def exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_sam
             x_train = x_train.float()
             y_train = y_train.float()
 
-            likelihood, model, optimizer, output, loss = GPtrain(
+            likelihood, model, optimizer, output, loss = GaussianProcess.GPtrain(
                 x_train, y_train, training_iter)
 
             RBF_lengthscale.append(model.covar_module.base_kernel.lengthscale.item())
@@ -183,7 +183,7 @@ def exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_sam
             x_test_global = x_test_global.float()
 
             # Get into evaluation (predictive posterior) mode
-            observed_pred_local, lower_local, upper_local = GPeval(
+            observed_pred_local, lower_local, upper_local = GaussianProcess.GPeval(
                 x_test_local, model, likelihood)
             with torch.no_grad():
                 f_preds = model(x_test_local)
@@ -199,7 +199,7 @@ def exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_sam
                 y_true[i_con], observed_pred_local.mean.numpy())
             rmse_local_obs.append(math.sqrt(mse_local_obs))
 
-            observed_pred_global, lower_global, upper_global = GPeval(
+            observed_pred_global, lower_global, upper_global = GaussianProcess.GPeval(
                 x_test_global, model, likelihood)
             with torch.no_grad():
                 f_preds = model(x_test_global)
@@ -231,7 +231,7 @@ def exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_sam
             BIC.append(BIC_sample)
 
             # plot real surface and the observed measurements
-            ax1, ax2, ax3, ax4, ax4a, ax5, ax5a, ax6 = plotGP(fig, x_true, i_sample, y_obs, i_train,
+            ax1, ax2, ax3, ax4, ax4a, ax5, ax5a, ax6 = GaussianProcess.plotGP(fig, x_true, i_sample, y_obs, i_train,
                                                               observed_pred_global, x_test_global, x_test_local,
                                                               upper_local, lower_local, var_iter_local, var_iter_global,
                                                               rmse_local_true, rmse_global_true, RBF_lengthscale,
@@ -243,8 +243,8 @@ def exploreSnake(y_obs, x_true, y_true, grid_diff, grid_bounds, grid_size, n_sam
             fig.savefig(image_path + str(len(set(i_train))) + '.png')
             fig.clear()
 
-    createVideo("Snake", func_name, dx, noise_name, r_disp, "")
-    outputMetric()
+    createVideo("Snake", func_name, noise_name, r_disp, dx)
+    outputMetric(i_train, x_true, y_true, observed_pred_global, x_test_global, rmse_global_true, rmse_global_obs, plt, rmse_local_true, var_iter_global, AIC, BIC, RBF_lengthscale, RBF_noise, covar_trace)
 
 def exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, flagIn, r_disp):
     local_flag = flagIn
@@ -297,7 +297,7 @@ def exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, flagIn, 
         y_train = torch.from_numpy(y_obs[i_train])
 
         # train model with GPyTorch model, which optimizes hyperparameters
-        likelihood, model, optimizer, output, loss = GPtrain(x_train, y_train, training_iter)
+        likelihood, model, optimizer, output, loss = GaussianProcess.GPtrain(x_train, y_train, training_iter)
         # store optimal hyperparameters
         RBF_lengthscale.append(model.covar_module.base_kernel.lengthscale.item())
         RBF_noise.append(model.likelihood.noise.item())
@@ -308,7 +308,7 @@ def exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, flagIn, 
         x_test_global = torch.from_numpy(x_true[i_seq, :])
 
         # Evaluate RMS for local
-        observed_pred_local, lower_local, upper_local = GPeval(x_test_local, model, likelihood)
+        observed_pred_local, lower_local, upper_local = GaussianProcess.GPeval(x_test_local, model, likelihood)
         with torch.no_grad():
             f_preds = model(x_test_local)
             y_preds = likelihood(model(x_test_local))
@@ -321,7 +321,7 @@ def exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, flagIn, 
         mse_local_obs = sklearn.metrics.mean_squared_error(y_true[i_con], observed_pred_local.mean.numpy())
         rmse_local_obs.append(math.sqrt(mse_local_obs))
         # and global
-        observed_pred_global, lower_global, upper_global = GPeval(x_test_global, model, likelihood)
+        observed_pred_global, lower_global, upper_global = GaussianProcess.GPeval(x_test_global, model, likelihood)
         with torch.no_grad():
             f_preds = model(x_test_global)
             y_preds = likelihood(model(x_test_global))
@@ -350,7 +350,7 @@ def exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, flagIn, 
         BIC.append(BIC_sample)
 
         # plot real surface and the observed measurements
-        ax1, ax2, ax3, ax4, ax4a, ax5, ax5a, ax6 = plotGP(fig, x_true, i_sample, y_obs, i_train, observed_pred_global, x_test_global, x_test_local, upper_local, lower_local, var_iter_local, var_iter_global, rmse_local_true, rmse_global_true, RBF_lengthscale, RBF_noise, covar_trace, covar_totelements, covar_nonzeroelements, AIC, BIC)
+        ax1, ax2, ax3, ax4, ax4a, ax5, ax5a, ax6 = GaussianProcess.plotGP(fig, x_true, i_sample, y_obs, i_train, observed_pred_global, x_test_global, x_test_local, upper_local, lower_local, var_iter_local, var_iter_global, rmse_local_true, rmse_global_true, RBF_lengthscale, RBF_noise, covar_trace, covar_totelements, covar_nonzeroelements, AIC, BIC)
         plt.show()
 
         # fig.tight_layout()
@@ -383,4 +383,4 @@ def exploreGPAL(func_name, y_obs, x_true, y_true, grid_diff, n_samples, flagIn, 
         i_train.append(int(i_sample))
 
     createVideo("GPAL", func_name, "noise", r_disp, explore_name)
-    outputMetric()
+    outputMetric(i_train, x_true, y_true, observed_pred_global, x_test_global, rmse_global_true, rmse_global_obs, plt, rmse_local_true, var_iter_global, AIC, BIC, RBF_lengthscale, RBF_noise, covar_trace)
